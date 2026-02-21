@@ -1,0 +1,235 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Organization model - Multi-tenancy (B2B SaaS)
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  plan      String   @default("FREE") // FREE, STARTER, PRO, ENTERPRISE
+  
+  // Configuración
+  logo      String?
+  timezone  String   @default("America/Mexico_City")
+  currency  String   @default("MXN")
+  
+  // Límites según plan
+  maxUsers      Int      @default(2)
+  maxStorage    Int      @default(1000) // MB
+  
+  status    String   @default("ACTIVE") // ACTIVE, SUSPENDED, CANCELLED
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users     User[]
+  clients   Client[]
+  rentals   Rental[]
+  inventory InventoryItem[]
+  activity  Activity[]
+
+  @@index([slug])
+  @@index([status])
+}
+
+// User model - Sistema de usuarios
+model User {
+  id        String   @id @default(cuid())
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  email     String
+  password  String   // bcrypt hashed
+  name      String
+  role      String   @default("MANAGER") // OWNER, ADMIN, MANAGER, STAFF
+  avatar    String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  clients   Client[]
+  rentals   Rental[]
+  inventory InventoryItem[]
+  activity  Activity[]
+
+  @@unique([organizationId, email])
+  @@index([organizationId])
+  @@index([email])
+}
+
+// Client model - Cartera de clientes
+model Client {
+  id        String   @id @default(cuid())
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name      String
+  email     String
+  phone     String
+  address   String?
+  city      String
+  company   String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  rentals   Rental[]
+
+  @@unique([organizationId, email])
+  @@index([organizationId])
+  @@index([userId])
+  @@index([email])
+}
+
+// Rental model - Eventos y rentales
+model Rental {
+  id        String   @id @default(cuid())
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  eventType String   // "wedding", "corporate", "birthday", etc
+  eventName String
+  status    String   @default("PENDING") // PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED
+  
+  deliveryDate DateTime
+  pickupDate   DateTime?
+  notes        String?
+  
+  totalAmount   Float   @default(0)
+  paymentStatus String  @default("UNPAID") // UNPAID, PARTIAL, PAID
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  items    RentalItem[]
+  payments Payment[]
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([clientId])
+  @@index([status])
+  @@index([deliveryDate])
+}
+
+// RentalItem model - Items de cada rental
+model RentalItem {
+  id        String   @id @default(cuid())
+  rentalId  String
+  rental    Rental   @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  
+  quantity  Int      @default(1)
+  unitPrice Float    @default(0)
+  notes     String?
+  
+  createdAt DateTime @default(now())
+
+  @@index([rentalId])
+  @@index([inventoryItemId])
+}
+
+// Payment model - Abonos y pagos de cada rental
+model Payment {
+  id       String @id @default(cuid())
+
+  rentalId String
+  rental   Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+
+  amount  Float  // Monto del abono
+  method  String @default("CASH") // CASH, TRANSFER, CARD, CHECK, OTHER
+  notes   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([rentalId])
+}
+
+// InventoryItem model - Artículos de inventario
+model InventoryItem {
+  id        String   @id @default(cuid())
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name      String
+  category  String
+  sku       String
+  description String?
+  
+  unitCost    Float   @default(0)
+  rentalPrice Float   @default(0)
+  
+  totalStock    Int   @default(0)
+  availableStock Int  @default(0)
+  location  String   @default("Bodega General")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  rentalItems RentalItem[]
+
+  @@unique([organizationId, sku])
+  @@index([organizationId])
+  @@index([userId])
+  @@index([category])
+  @@index([sku])
+}
+
+// Activity model - Auditoría de cambios
+model Activity {
+  id        String   @id @default(cuid())
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  action    String   // "created_rental", "updated_inventory", etc
+  entityType String  // "rental", "inventory", "client", "user"
+  entityId  String
+  changes   String?  // JSON stringified changes
+  
+  createdAt DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([entityType])
+  @@index([createdAt])
+}
+
+// Enums para usar en TypeScript
+// OrganizationPlan: FREE, STARTER, PRO, ENTERPRISE
+// OrganizationStatus: ACTIVE, SUSPENDED, CANCELLED
+// UserRole: OWNER, ADMIN, MANAGER, STAFF
+// RentalStatus: PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED
+// PaymentStatus: UNPAID, PARTIAL, PAID
