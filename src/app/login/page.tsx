@@ -1,26 +1,53 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, FormEvent, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { LogIn } from 'lucide-react';
+import { LogIn, AlertCircle } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginForm() {
     const router = useRouter();
-    const [email, setEmail] = useState('admin@evenrent.demo');
-    const [password, setPassword] = useState('password123');
+    const searchParams = useSearchParams();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Leer error desde URL (?error=CredentialsSignin)
+    useEffect(() => {
+        const urlError = searchParams.get('error');
+        if (urlError) setError(getErrorMessage(urlError));
+    }, [searchParams]);
+
+    function getErrorMessage(errorCode: string | undefined | null): string {
+        switch (errorCode) {
+            case 'CredentialsSignin':
+            case 'credentials':
+                return 'Email o contraseña incorrectos. Verifica tus datos.';
+            case 'Organización suspendida o cancelada':
+            case 'AccessDenied':
+                return 'Tu cuenta está suspendida. Contacta al administrador.';
+            case 'Configuration':
+                return 'Error de configuración del servidor. Intenta más tarde.';
+            default:
+                return errorCode
+                    ? 'Email o contraseña incorrectos. Verifica tus datos.'
+                    : 'No se pudo iniciar sesión. Intenta de nuevo.';
+        }
+    }
 
     async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         setError(null);
-        setIsLoading(true);
 
+        if (!email.trim()) { setError('Ingresa tu correo electrónico.'); return; }
+        if (!password)     { setError('Ingresa tu contraseña.'); return; }
+
+        setIsLoading(true);
         try {
             const result = await signIn('credentials', {
                 email,
@@ -28,14 +55,15 @@ export default function LoginPage() {
                 redirect: false,
             });
 
-            if (!result?.ok) {
-                setError('Email o contraseña inválidos');
+            if (!result?.ok || result?.error) {
+                setError(getErrorMessage(result?.error));
                 return;
             }
 
             router.push('/');
-        } catch (err) {
-            setError('Error al iniciar sesión');
+            router.refresh();
+        } catch {
+            setError('Error de conexión. Intenta de nuevo.');
         } finally {
             setIsLoading(false);
         }
@@ -57,8 +85,9 @@ export default function LoginPage() {
                 <div className="bg-zinc-50 border-2 border-zinc-200 rounded-xl p-8 shadow-lg">
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {error && (
-                            <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded">
-                                <p className="text-sm text-red-700 font-medium">{error}</p>
+                            <div className="flex items-start gap-2.5 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
+                                <p className="text-[13px] text-red-700 font-medium">{error}</p>
                             </div>
                         )}
 
@@ -117,5 +146,21 @@ export default function LoginPage() {
                 </p>
             </div>
         </div>
+    );
+}
+
+function LoginFallback() {
+    return (
+        <div className="min-h-screen bg-white flex items-center justify-center p-4">
+            <div className="h-8 w-8 rounded-full border-2 border-zinc-200 border-t-zinc-900 animate-spin" />
+        </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<LoginFallback />}>
+            <LoginForm />
+        </Suspense>
     );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { trpc } from '@/lib/trpc/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -72,6 +73,7 @@ const getStockBadge = (available: number, total: number) => {
 };
 
 export function InventoryList() {
+    const router = useRouter();
     const [search, setSearch] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [editingItem, setEditingItem] = useState<any>(null);
@@ -202,7 +204,11 @@ export function InventoryList() {
                                 </TableCell>
                             </TableRow>
                         ) : filteredItems.map((item) => (
-                            <TableRow key={item.id} className="border-zinc-200/60 hover:bg-zinc-50/40 transition-colors">
+                            <TableRow
+                                key={item.id}
+                                className="border-zinc-200/60 hover:bg-zinc-50/40 transition-colors cursor-pointer"
+                                onClick={() => router.push(`/inventory/${item.id}`)}
+                            >
                                 <TableCell>
                                     <div className="flex items-center gap-3">
                                         <div className="h-9 w-9 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
@@ -229,7 +235,7 @@ export function InventoryList() {
                                     ${item.rentalPrice.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                 </TableCell>
                                 <TableCell className="text-zinc-500 text-sm">{item.location}</TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">

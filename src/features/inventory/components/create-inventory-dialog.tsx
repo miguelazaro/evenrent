@@ -167,7 +167,7 @@ export function CreateInventoryDialog({ open, onOpenChange }: CreateInventoryDia
                                     <FormItem>
                                         <FormLabel className="text-sm font-semibold text-zinc-900">Costo Unitario (MXN)</FormLabel>
                                         <FormControl>
-                                            <Input {...field} type="number" min={0} step={0.01} className="h-11 border-zinc-300 focus:border-zinc-900" onChange={(e) => field.onChange(e.target.valueAsNumber)} />
+                                            <Input {...field} type="number" min={0} step={0.01} className="h-11 border-zinc-300 focus:border-zinc-900" value={Number.isNaN(field.value) ? '' : field.value} onChange={(e) => field.onChange(Number.isNaN(e.target.valueAsNumber) ? 0 : e.target.valueAsNumber)} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -182,7 +182,7 @@ export function CreateInventoryDialog({ open, onOpenChange }: CreateInventoryDia
                                     <FormItem>
                                         <FormLabel className="text-sm font-semibold text-zinc-900">Precio de Renta (MXN)</FormLabel>
                                         <FormControl>
-                                            <Input {...field} type="number" min={0} step={0.01} className="h-11 border-zinc-300 focus:border-zinc-900" onChange={(e) => field.onChange(e.target.valueAsNumber)} />
+                                            <Input {...field} type="number" min={0} step={0.01} className="h-11 border-zinc-300 focus:border-zinc-900" value={Number.isNaN(field.value) ? '' : field.value} onChange={(e) => field.onChange(Number.isNaN(e.target.valueAsNumber) ? 0 : e.target.valueAsNumber)} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -197,7 +197,7 @@ export function CreateInventoryDialog({ open, onOpenChange }: CreateInventoryDia
                                     <FormItem>
                                         <FormLabel className="text-sm font-semibold text-zinc-900">Stock Total</FormLabel>
                                         <FormControl>
-                                            <Input {...field} type="number" min={0} step={1} className="h-11 border-zinc-300 focus:border-zinc-900" onChange={(e) => field.onChange(e.target.valueAsNumber)} />
+                                            <Input {...field} type="number" min={0} step={1} className="h-11 border-zinc-300 focus:border-zinc-900" value={Number.isNaN(field.value) ? '' : field.value} onChange={(e) => field.onChange(Number.isNaN(e.target.valueAsNumber) ? 0 : e.target.valueAsNumber)} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
