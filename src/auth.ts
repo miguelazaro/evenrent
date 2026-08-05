@@ -79,7 +79,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
@@ -87,6 +87,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.organizationName = (user as any).organizationName;
         token.organizationSlug = (user as any).organizationSlug;
         token.organizationPlan = (user as any).organizationPlan;
+        token.name = user.name;
+      }
+      if (trigger === 'update' && session?.name) {
+        token.name = session.name;
       }
       return token;
     },
