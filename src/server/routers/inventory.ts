@@ -115,4 +115,38 @@ export const inventoryRouter = createTRPCRouter({
       });
       return { success: true };
     }),
+
+  getById: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const user = await ctx.db.user.findUnique({
+        where: { id: ctx.session.user.id },
+        select: { organizationId: true },
+      });
+      if (!user) throw new Error('User not found');
+
+      return ctx.db.inventoryItem.findUniqueOrThrow({
+        where: { id: input.id, organizationId: user.organizationId },
+        include: {
+          rentalItems: {
+            orderBy: { createdAt: 'desc' },
+            select: {
+              id: true,
+              quantity: true,
+              unitPrice: true,
+              rental: {
+                select: {
+                  id: true,
+                  eventName: true,
+                  eventType: true,
+                  status: true,
+                  deliveryDate: true,
+                  client: { select: { name: true } },
+                },
+              },
+            },
+          },
+        },
+      });
+    }),
 });
