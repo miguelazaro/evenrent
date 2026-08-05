@@ -4,6 +4,9 @@ import { inventoryRouter } from './inventory';
 import { clientRouter } from './client';
 import { dashboardRouter } from './dashboard';
 import { paymentRouter } from './payment';
+import { settingsRouter } from './settings';
+import { analyticsRouter } from './analytics';
+import { notificationsRouter } from './notifications';
 
 /**
  * Root tRPC Router
@@ -15,6 +18,9 @@ export const appRouter = createTRPCRouter({
   clients: clientRouter,
   dashboard: dashboardRouter,
   payment: paymentRouter,
+  settings: settingsRouter,
+  analytics: analyticsRouter,
+  notifications: notificationsRouter,
 });
 
 // Export type definition of API
