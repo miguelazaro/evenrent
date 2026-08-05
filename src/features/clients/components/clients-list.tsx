@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { trpc } from '@/lib/trpc/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ import { toast } from 'sonner';
 import { EditClientDialog } from './edit-client-dialog';
 
 export function ClientsList() {
+    const router = useRouter();
     const [search, setSearch] = useState('');
     const [editingClient, setEditingClient] = useState<any>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -104,7 +106,11 @@ export function ClientsList() {
                                 </TableCell>
                             </TableRow>
                         ) : filteredClients.map((client) => (
-                            <TableRow key={client.id} className="border-zinc-200/60 hover:bg-zinc-50/40 transition-colors">
+                            <TableRow
+                                key={client.id}
+                                className="border-zinc-200/60 hover:bg-zinc-50/40 transition-colors cursor-pointer"
+                                onClick={() => router.push(`/clients/${client.id}`)}
+                            >
                                 <TableCell>
                                     <div className="flex items-center gap-3">
                                         <div className="h-9 w-9 rounded-full bg-zinc-900 text-white flex items-center justify-center text-sm font-bold shrink-0">
@@ -141,7 +147,7 @@ export function ClientsList() {
                                         {client.city}
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">

@@ -91,4 +91,34 @@ export const clientRouter = createTRPCRouter({
         where: { id: input.id, organizationId: user.organizationId },
       });
     }),
+
+  getById: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const user = await ctx.db.user.findUnique({
+        where: { id: ctx.session.user.id },
+        select: { organizationId: true },
+      });
+      if (!user) throw new Error('User not found');
+
+      return ctx.db.client.findUniqueOrThrow({
+        where: { id: input.id, organizationId: user.organizationId },
+        include: {
+          rentals: {
+            orderBy: { deliveryDate: 'desc' },
+            select: {
+              id: true,
+              eventName: true,
+              eventType: true,
+              status: true,
+              paymentStatus: true,
+              deliveryDate: true,
+              pickupDate: true,
+              totalAmount: true,
+              items: { select: { quantity: true } },
+            },
+          },
+        },
+      });
+    }),
 });
