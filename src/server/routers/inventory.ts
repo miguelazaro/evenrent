@@ -97,8 +97,14 @@ export const inventoryRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
+      const user = await ctx.db.user.findUnique({
+        where: { id: ctx.session.user.id },
+        select: { organizationId: true },
+      });
+      if (!user) throw new Error('User not found');
+
       const item = await ctx.db.inventoryItem.update({
-        where: { id },
+        where: { id, organizationId: user.organizationId },
         data,
       });
       return item;
