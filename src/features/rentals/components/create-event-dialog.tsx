@@ -210,9 +210,9 @@ export function CreateEventDialog({ open, onOpenChange }: CreateEventDialogProps
                                         <SelectContent position="popper">
                                             <SelectItem value="wedding">Boda</SelectItem>
                                             <SelectItem value="corporate">Evento Corporativo</SelectItem>
-                                            <SelectItem value="birthday">CumpleaÃ±os</SelectItem>
+                                            <SelectItem value="birthday">Cumpleaños</SelectItem>
                                             <SelectItem value="anniversary">Aniversario</SelectItem>
-                                            <SelectItem value="graduation">GraduaciÃ³n</SelectItem>
+                                            <SelectItem value="graduation">Graduación</SelectItem>
                                             <SelectItem value="other">Otro</SelectItem>
                                         </SelectContent>
                                     </Select>
